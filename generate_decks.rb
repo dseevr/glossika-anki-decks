@@ -2,16 +2,36 @@
 # coding: utf-8
 
 require "bundler/setup"
+require "anki"
+
 require_relative "glossika_pdf"
 
-INPUT_FILE = "/home/bill/Desktop/glossika/ENZT-F123-EBK/GLOSSIKA-ENZT-F1-EBK.pdf".freeze
-START_PAGE = 35
-END_PAGE = 305
+HEADERS = %w[front back]
 
-GlossikaPDFParser.new(INPUT_FILE, START_PAGE, END_PAGE).sentence_pairs.each.with_index(1) do |sp, i|
-  puts "##{i}"
-  puts "English: #{sp.english}"
-  puts "Chinese: #{sp.chinese}"
-  puts "Pinyin: #{sp.pinyin}"
-  puts
+
+def generate_sentence_deck(parser, output_filename)
+  cards = []
+
+  parser.sentence_pairs.each do |sentence|
+    cards << {
+      "front" => sentence.chinese,
+      "back" =>  [sentence.english, sentence.chinese, sentence.pinyin].join("<br /><br />"),
+    }
+  end
+
+  deck = Anki::Deck.new(card_headers: HEADERS, card_data: cards, field_separator: "|")
+  deck.generate_deck(file: output_filename)
+
+  puts "wrote #{output_filename}"
+end
+
+
+if __FILE__ == $PROGRAM_NAME
+  input_filename = "/home/bill/Desktop/glossika/ENZT-F123-EBK/GLOSSIKA-ENZT-F1-EBK.pdf"
+  start_page = 35
+  end_page = 305
+
+  parser = GlossikaPDFParser.new(input_filename, start_page, end_page)
+
+  generate_sentence_deck(parser, "sentences_deck.txt")
 end

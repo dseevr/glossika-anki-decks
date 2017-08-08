@@ -3,6 +3,7 @@ GEM
   specs:
     Ascii85 (1.0.2)
     afm (0.2.2)
+    anki (0.0.4)
     hashery (2.1.2)
     pdf-reader (2.0.0)
       Ascii85 (~> 1.0.0)
@@ -17,6 +18,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  anki (= 0.0.4)
   pdf-reader (= 2.0.0)
 
 BUNDLED WITH
