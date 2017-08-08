@@ -10,14 +10,16 @@ require_relative "lib/language_tree"
 HEADERS = %w[front back]
 
 
-def generate_sentence_deck(parser, output_filename)
+def generate_sentence_deck(parsers, output_filename)
   cards = []
 
-  parser.sentence_pairs.each do |sentence|
-    cards << {
-      "front" => sentence.chinese,
-      "back" =>  [sentence.english, sentence.chinese, sentence.pinyin].join("<br /><br />"),
-    }
+  parsers.each do |parser|
+    parser.sentence_pairs.each do |sentence|
+      cards << {
+        "front" => sentence.chinese,
+        "back" =>  [sentence.english, sentence.chinese, sentence.pinyin].join("<br /><br />"),
+      }
+    end
   end
 
   deck = Anki::Deck.new(card_headers: HEADERS, card_data: cards, field_separator: "|")
@@ -26,17 +28,19 @@ def generate_sentence_deck(parser, output_filename)
   puts "Wrote #{output_filename}"
 end
 
-def generate_frequency_deck(parser, output_filename, character_count)
+def generate_frequency_deck(parsers, output_filename, character_count)
 
   puts "Loading and sorting sentences by score"
 
   sentences = []
 
-  parser.sentence_pairs.each do |sp|
-    sentences << {
-      score: LanguageTree.score_for_sentence(sp.chinese),
-      data: sp,
-    }
+  parsers.each do |parser|
+    parser.sentence_pairs.each do |sp|
+      sentences << {
+        score: LanguageTree.score_for_sentence(sp.chinese),
+        data: sp,
+      }
+    end
   end
 
   sentences = sentences.sort_by { |s| s[:score] }
@@ -91,13 +95,17 @@ end
 
 
 if __FILE__ == $PROGRAM_NAME
-  input_filename = "/home/bill/Desktop/glossika/ENZT-F123-EBK/GLOSSIKA-ENZT-F1-EBK.pdf"
-  start_page = 35
-  end_page = 305
+  filenames = (1..3).map { |n| "/home/bill/Desktop/glossika/ENZT-F123-EBK/GLOSSIKA-ENZT-F#{n}-EBK.pdf" }
+  start_pages = [35, 36, 36]
+  end_pages = [305, 334, 356]
 
-  parser = GlossikaPDFParser.new(input_filename, start_page, end_page)
+  parsers = []
 
-  generate_sentence_deck(parser, "sentences_deck.txt")
+  [filenames, start_pages, end_pages].transpose.each do |filename, start_page, end_page|
+    parsers << GlossikaPDFParser.new(filename, start_page, end_page)
+  end
 
-  generate_frequency_deck(parser, "frequency_deck.txt", 9999) # all ~3000 characters
+  generate_sentence_deck(parsers, "sentences_deck.txt")
+
+  generate_frequency_deck(parsers, "frequency_deck.txt", 9999) # all ~3000 characters
 end

@@ -4,8 +4,8 @@ require "pdf-reader"
 
 class SentencePair
 
-  ENGLISH_PUNCTUATION = %w_! ? . ] )_ # some legitimately end with ) or ]
-  CHINESE_PUNCTUATION = %w_！ ？ 。 ?_ # english question mark is sometimes used
+  ENGLISH_PUNCTUATION = %w_! ? . ] ) "  ,_ # some legitimately end with weird characters
+  CHINESE_PUNCTUATION = %w_！ ？ 。 ?  」_ + ["蓋"] # english question mark is sometimes used
 
   attr_reader :english, :chinese, :pinyin
 
@@ -53,11 +53,21 @@ class GlossikaPDFParser
         pinyin  = text.scan(/PIN\s*?(.+?)\nIPA/m)
 
         unless english.size == chinese.size && chinese.size == pinyin.size
-          raise "bad sizes: #{english.size}, #{chinese.size}, #{pinyin.size}"
+          msg = [
+            "bad sizes: #{english.size}, #{chinese.size}, #{pinyin.size}",
+            "original text:\n\n#{text}"
+          ]
+
+          raise msg.join(" ")
         end
 
         if [english.size, chinese.size, pinyin.size].any?(&:zero?)
-          raise "unexpected 0 value: #{english.size}, #{chinese.size}, #{pinyin.size}"
+          msg = [
+            "unexpected 0 value: #{english.size}, #{chinese.size}, #{pinyin.size}",
+            "original text:\n\n#{text}"
+          ]
+
+          raise msg.join(" ")
         end
 
         [english, chinese, pinyin].map(&:flatten).transpose.each do |e, c, p|
