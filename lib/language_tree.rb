@@ -7,8 +7,12 @@ require "tradsim"
 def load_common_characters
   filename = "data/most_common_traditional_characters.txt"
 
-  characters = File.read(filename).lines[1..-1].map { |l| Tradsim::to_trad(l.chars.first) }
-  characters.zip((1..(characters.length)).to_a).to_h
+  # read the first character of each line (skipping the first line) and
+  # turn each one into a hash key with the associated frequency as its value.
+  # (the file is already sorted by frequency)
+  File.read(filename).lines[1..-1].each.with_index(1).map do |a, b|
+    [Tradsim::to_trad(a.chars.first), b]
+  end.to_h
 end
 
 class NonChineseCharacterError < Exception; end
@@ -26,26 +30,19 @@ class LanguageTree
   SCORE_MIN = 0.0
   SCORE_MAX = 100.0
 
+  UNKNOWN_CHARACTER_SCORE = COMMON_CHARACTERS.length + 1
+
   def self.character_percentile(input)
     ensure_chinese_characters(input)
     raise ArgumentError.new("must be one character") unless input.length == 1
 
-    rank = character_rank(input)
-    
-    (rank.to_f / COMMON_CHARACTERS_TO_FREQUENCY[COMMON_CHARACTERS.last]) * 100
+    (character_rank(input).to_f / COMMON_CHARACTERS_TO_FREQUENCY[COMMON_CHARACTERS.last]) * 100
   end
 
   def self.character_rank(input)
     ensure_chinese_characters(input)
 
-    rank = COMMON_CHARACTERS_TO_FREQUENCY[input]
-
-    if rank
-      rank
-    else
-      # unknown characters can't be classified, so we return an implausible rank
-      COMMON_CHARACTERS.length + 1
-    end
+    COMMON_CHARACTERS_TO_FREQUENCY[input] || UNKNOWN_CHARACTER_SCORE
   end
 
   def self.ensure_chinese_characters(input)
@@ -77,14 +74,7 @@ class LanguageTree
     ensure_chinese_characters(input)
     raise ArgumentError.new("must not be empty") if input.empty?
 
-    score = 0
-
-    # TODO: why doesn't inject work here?
-    input.chars.uniq.each do |char|
-      score += character_rank(char)
-    end
-
-    score.to_f
+    input.chars.uniq.map(&method(:character_rank)).inject(:+).to_f
   end
 
 end
