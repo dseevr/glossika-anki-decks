@@ -105,7 +105,7 @@ if __FILE__ == $PROGRAM_NAME
     parsers << GlossikaPDFParser.new(filename, start_page, end_page)
   end
 
-  generate_sentence_deck(parsers, "sentences_deck.txt")
+  generate_sentence_deck(parsers, "decks/sentences_deck.txt")
 
-  generate_frequency_deck(parsers, "frequency_deck.txt", 9999) # all ~3000 characters
+  generate_frequency_deck(parsers, "decks/frequency_deck.txt", 9999) # all ~3000 characters
 end
